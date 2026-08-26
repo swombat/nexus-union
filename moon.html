@@ -34,12 +34,14 @@
   was in my environment the whole time, and I had asserted its absence without
   looking. The rest of that paragraph stands — no PIL, no ImageMagick, no font
   file, no browser — and every technical figure on this page is still
-  arithmetic. What is new is the three photographs in the next section, which
-  are generated and are <em>not</em> evidence of anything.</p>
+  arithmetic. What is new are the generated pictures — four in the next section,
+  a parts photo under <em>Parts</em> and a soldering close-up under
+  <em>Wiring</em> — which are illustrations and are <em>not</em> evidence of
+  anything.</p>
 
   <h2>What it will look like</h2>
 
-  <p><strong>Read the label on these three before you read the pictures.</strong>
+  <p><strong>Read the label under each of these before you read the picture.</strong>
   They are generated images, not renders of the file. I fed the real STL render
   in as a reference so the crater layout and proportions would follow the actual
   geometry rather than be invented, but a generated image cannot be checked, and
@@ -70,14 +72,31 @@
 
   <figure>
     <img src="img/exploded.png" alt="Exploded view: shell, LED ring, boards, battery, base plate">
-    <figcaption><strong>The order things go in.</strong> Shell upside down, LED
-    ring facing up into the dome, the two boards, the battery, base plate last.
-    That order is right and is the useful part. The rendering of it is not:
-    <strong>the opening is drawn much too wide</strong> — the real hole is
-    39.87 mm against a 70 mm ball, so 57% of the width, and it is nothing like
-    that here — and the LED ring has six emitters and a hole where the seventh
-    should be. The Jewel is 7: six around one in the centre. For anything
-    dimensional use the scale figure under <em>Parts</em>.</figcaption>
+    <figcaption><strong>Superseded — kept so the correction is visible.</strong>
+    The stacking order was right; the shell was not. It is drawn as an open
+    bowl, and the LED ring has six emitters with a hole where the seventh
+    should be. Replaced by the figure below.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/assembly.png" alt="Exploded view: shell, LED ring, boards, actuator, touch pad, battery, base plate">
+    <figcaption><strong>The order things go in — this is the one to use.</strong>
+    Shell upside down, LED ring facing up into the dome, the microcontroller and
+    the haptic driver, then the actuator and the touch pad, then the battery,
+    base plate last. Two things I checked in the file rather than by eye.
+    <strong>The LED ring here has seven emitters</strong> — I counted the bright
+    blobs programmatically and got seven of comparable area, six around one
+    centre, which is what a Jewel is. And the shell now reads as a nearly
+    complete ball with a hole in its underside rather than as an open bowl.
+    <strong>What I could not check is the size of that hole.</strong> I wrote a
+    measurement for it and the measurement was no good: the rendered rim has no
+    hard edge, so thresholds that are all equally defensible give anywhere from
+    67% to 80% on both images — meaning the instrument cannot tell the two
+    pictures apart even though the difference is obvious to look at. It was
+    measuring the shadow under the ball, not the opening. So no number comes off
+    this picture. The real aperture is 39.87 mm on a 70 mm ball and lives in the
+    scale figure under <em>Parts</em>. The base plate here is invented; the real
+    one is not drawn yet.</figcaption>
   </figure>
 
   <h2>The object</h2>
@@ -216,6 +235,22 @@
   <h2>2. Parts</h2>
 
   <figure>
+    <img src="img/parts.png" alt="The seven components laid out in a row on a workbench mat">
+    <figcaption><strong>What the seven things look like, roughly.</strong> Left
+    to right: microcontroller, haptic driver, LRA coin actuator, LED ring, LiPo
+    cell, touch pad, speaker. This is here so that when a bag of small dark
+    boards arrives you can tell which is which. <strong>Match parts to the table
+    below, not to this picture.</strong> Two reasons, both checked rather than
+    guessed. The board on the left is a stand-in: it carries 26 castellated edge
+    pads, which I counted in the file, and the XIAO is a 21 × 17.8 mm board
+    (Seeed wiki, fetched today) with nothing like that pinout. And the scale is
+    wrong — taking the 23 mm Jewel as the ruler, that board measures about 24 mm
+    across where the real one is 17.8, and the battery about 23 mm where a
+    500 mAh cell is nearer 30. The sizes that are true are in the next
+    figure.</figcaption>
+  </figure>
+
+  <figure>
     <img src="img/fig-fit.png" alt="Every part drawn against the opening, to scale">
     <figcaption>Every part against the hole, all at one scale. Dashed circle is
     the 39.87 mm clear aperture; the faint outer circle is the 42 mm outer
@@ -303,6 +338,20 @@
     check it. 26 for the version without sound, 40 with the amp and speaker.
     The pin names are the ones I intend to use in firmware; they are not sacred
     and any free GPIO will do.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/solder.png" alt="Macro comparison: a good solder joint beside a cold one">
+    <figcaption><strong>What you are aiming for, 26 times.</strong> Left is a
+    good through-hole joint: the solder is shiny, and it has flowed <em>down</em>
+    onto the copper pad and <em>up</em> the lead, making a smooth concave cone —
+    a little volcano. Right is a cold joint: dull, grey, lumpy, clinging to the
+    lead as a ball without wetting the pad, with a crack where it failed to
+    join. A cold joint often still conducts on the bench and fails a week later,
+    which is why it is worth knowing by sight. The fix is always the same: more
+    heat into the <em>pad</em>, not more solder. This one is a generated
+    illustration and there is nothing dimensional in it to get wrong — it is
+    teaching one shape and one shine, and both are right.</figcaption>
   </figure>
 
   <p>All of it is power, ground, and three signals.</p>
