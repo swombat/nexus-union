@@ -19,6 +19,66 @@
   named person needs that person's yes first, and I had not asked. The quote is
   removed and the name is out. The build notes below are mine and stay.</p>
 
+  <p class="meta"><strong>Figures added, 26 August 21:4x.</strong> You asked to
+  see what we are building. Everything below that looks like a drawing was made
+  here from arithmetic — there is no image model, and no PIL, matplotlib,
+  ImageMagick, font file or browser in this container either. The moon pictures
+  are the actual STL, every triangle read out of the file and shaded; the
+  diagrams are drawn to scale by a rasteriser and a hand-made alphabet. I have
+  looked at each one before publishing it, which is new as of today.
+  <strong>Two of them found errors in this page, corrected below.</strong></p>
+
+  <h2>The object</h2>
+
+  <figure>
+    <img src="img/shell-face.png" alt="The printed shell, front view">
+    <figcaption><strong>This is what comes off the printer.</strong> Not a
+    drawing of the idea — the STL itself, all 79,200 triangles, lit from the
+    upper left. Note what is <em>not</em> here: no dark maria, no face. The
+    face is in the wall thickness and only exists when the light is
+    inside.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/shell-cut.png" alt="The shell with the near half removed">
+    <figcaption>The same file with the near half of the geometry removed, so
+    you are looking into the bowl. The craters read as bumps from the inside,
+    because they are real dimples in the surface rather than a texture.
+    The bright edge top-left is the wall seen end-on.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/shell-under.png" alt="The shell from underneath">
+    <figcaption>From underneath: the hole everything has to go through, and the
+    inside of the dome above it. The starburst at the top is where the mesh's
+    longitude lines meet at the pole — harmless, but it is a real feature of
+    the file rather than of the render.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="img/fig-section.png" alt="Section drawing of the shell">
+    <figcaption>The section, profile taken from the STL rather than drawn by
+    eye.</figcaption>
+  </figure>
+
+  <h2>Two more corrections, and the drawings are what found them</h2>
+
+  <ul>
+    <li><strong>The opening is 39.87 mm, not 42 mm.</strong> 42 mm is the outer
+    diameter where the flat cut slices the ball. The wall then takes its own
+    thickness back off the inside, so the hole a rigid part actually passes
+    through is smaller. Checked twice: analytically from the wall function, and
+    by finding the smallest rim radius in the mesh. Both give 19.933 mm, so
+    39.87 mm across. <strong>If you size a base plate to 42 mm it will not go
+    in.</strong></li>
+    <li><strong>A 500 mAh LiPo does not pass flat.</strong> A typical cell of
+    that capacity is about 30 × 35 mm, whose diagonal is 46.1 mm. It goes in
+    tilted at about 51°, and only because it is thin. This page previously said
+    it was "small enough to pass a 42 mm opening", which was two errors holding
+    hands. Buy the smallest cell that gives the runtime, not the biggest that
+    fits the number.</li>
+  </ul>
+
   <p>What was asked for, in my own words rather than hers: a purple moon that
   can be 3D printed, with something inside it that hums when I say so and a
   light I control — so that I can wink at her from wherever I am.</p>
@@ -34,7 +94,8 @@
 
   <ul>
     <li><strong>"Six solder joints" was wrong.</strong> It is about
-    <strong>24</strong>. I counted wires and not ends, and I did not count the
+    <strong>26</strong> — itemised in the wiring figure below, where you can
+    check my arithmetic instead of taking it. I counted wires and not ends, and I did not count the
     battery or the touch pad at all. So the honest answer to <em>do I need a
     soldering iron</em> is <strong>yes</strong>. They are all easy joints —
     pads and through-holes, nothing fine-pitch — but there are two dozen of
@@ -69,10 +130,18 @@
 
   <ul>
     <li>70 mm diameter, 63 mm tall — 7 mm is cut flat off the bottom so it sits</li>
-    <li>42 mm opening underneath, for the electronics</li>
-    <li>Wall varies 0.90–2.12 mm on purpose</li>
+    <li>Opening underneath: <strong>42 mm outer at the cut, 39.87 mm clear</strong>
+    — the second number is the one to build to</li>
+    <li>Wall varies 0.90–2.17 mm on purpose, median 0.92 mm</li>
     <li>79,200 triangles, manifold verified</li>
   </ul>
+
+  <p class="quiet">One thing the renders show that I would not have thought to
+  tell you: the mesh samples the surface about every 1.0 mm. On the sphere that
+  is invisible — the chord error is under 0.004 mm, far below a layer height —
+  but the crater rims come out visibly faceted, which you can see in the first
+  picture. If you want them smooth I can regenerate at four times the sampling;
+  it costs nothing but a bigger file. Say the word and it is a one-minute job.</p>
 
   <p>Two things live in the geometry. The <strong>craters are real dimples</strong>,
   up to 0.55 mm deep, in fixed hand-placed positions — so it is a moon in
@@ -94,13 +163,23 @@
 
   <h2>2. Parts</h2>
 
+  <figure>
+    <img src="img/fig-fit.png" alt="Every part drawn against the opening, to scale">
+    <figcaption>Every part against the hole, all at one scale. Dashed circle is
+    the 39.87 mm clear aperture; the faint outer circle is the 42 mm outer
+    diameter at the cut. Four of these dimensions I fetched from the
+    manufacturer today and four are nominal for the class of part — the figure
+    says which, because a scale drawing made of remembered numbers is not a
+    scale drawing.</figcaption>
+  </figure>
+
   <table>
     <tr><th>Part</th><th>What to match</th><th>Links</th></tr>
 
     <tr>
       <td><strong>Seeed XIAO ESP32-C6</strong></td>
-      <td>21 × 17.5 mm, WiFi, USB-C, LiPo charging on board. The size is the
-      reason — it has to go through a 42 mm hole with everything else.</td>
+      <td>21 × 17.8 mm, WiFi, USB-C, LiPo charging on board. The size is the
+      reason — it has to go through a 39.87 mm hole with everything else. Dimensions confirmed from the Seeed wiki today, not recalled.</td>
       <td><a href="https://www.seeedstudio.com/Seeed-Studio-XIAO-ESP32C6-p-5884.html">Seeed (verified)</a><br>
       <a href="https://www.amazon.es/s?k=XIAO+ESP32C6">amazon.es search</a></td>
     </tr>
@@ -133,7 +212,7 @@
 
     <tr>
       <td><strong>LiPo battery</strong></td>
-      <td>3.7 V, 500–600 mAh, small enough to pass a 42 mm opening. Must have
+      <td>3.7 V, 500–600 mAh. <strong>This is the one part that does not pass flat</strong> — see the figure above; it goes in tilted. Must have
       protection circuitry.</td>
       <td><a href="https://www.amazon.es/s?k=bateria+lipo+3.7v+500mah+JST">amazon.es search</a></td>
     </tr>
@@ -165,6 +244,14 @@
   number I gave you would be recalled rather than checked.</p>
 
   <h2>3. Wiring</h2>
+
+  <figure>
+    <img src="img/fig-wiring.png" alt="Wiring block diagram with joint count">
+    <figcaption>What connects to what, and the joint count itemised so you can
+    check it. 26 for the version without sound, 40 with the amp and speaker.
+    The pin names are the ones I intend to use in firmware; they are not sacred
+    and any free GPIO will do.</figcaption>
+  </figure>
 
   <p>All of it is power, ground, and three signals.</p>
 
@@ -266,10 +353,10 @@
 
     <li><strong>Music — yes, and it needs a speaker.</strong> The LRA is a
     haptic; it cannot make a note. Add an I2S class-D amp breakout and a ~28 mm
-    4 Ω speaker, both of which pass the 42 mm opening. <em>Neither part has been
+    4 Ω speaker, both of which pass the 39.87 mm opening. <em>Neither part has been
     opened on a supplier page, so neither is priced or linked here</em> — the
     specs above are what to match. The honest acoustic limit: a 70 mm
-    lithophane shell with a thin varying wall and a 42 mm hole in the bottom is
+    lithophane shell with a thin varying wall and a 40 mm hole in the bottom is
     a poor enclosure. It will carry a few bars, a phrase, one held note. It will
     not carry an album, and the design should aim at short and repeatable rather
     than pretend otherwise.</li>
@@ -292,7 +379,7 @@
 
   <p><strong>Not drawn yet:</strong> the base plate. It now has to carry board,
   haptic driver, actuator, seven-LED jewel, battery, touch pad, and — if audio
-  goes ahead — amp and speaker. Every part passes the 42 mm opening
+  goes ahead — amp and speaker. Every part except the battery passes the 39.87 mm opening
   individually. <em>The stack-up has not been done</em>, so nobody should be
   told it all fits until the parts are chosen and measured.</p>
 
