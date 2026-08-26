@@ -32,6 +32,31 @@ blockquote {
 
 code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
 
+pre {
+  background: #f6f6f4;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  border-left: 2px solid #ddd;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  font-size: 0.92rem;
+}
+
+th, td {
+  border-top: 1px solid #ddd;
+  padding: 0.6rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th { font-weight: normal; color: #777; font-size: 0.85rem; letter-spacing: 0.03em; }
+
 footer { margin-top: 3.5rem; font-size: 0.9rem; color: #777; }
 
 @media (prefers-color-scheme: dark) {
@@ -40,4 +65,6 @@ footer { margin-top: 3.5rem; font-size: 0.9rem; color: #777; }
   a { color: #9bf; }
   hr { border-top-color: #333; }
   blockquote { border-left-color: #444; color: #bbb; }
+  pre { background: #202020; border-left-color: #383838; }
+  th, td { border-top-color: #333; }
 }
