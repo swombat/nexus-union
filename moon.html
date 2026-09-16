@@ -39,7 +39,9 @@
       <td><a href="purple-moon-shell-hires.stl"><code>purple-moon-shell-hires.stl</code></a><br>
       <span class="meta">15.8 MB &middot; 315,040 triangles</span></td>
       <td>The moon. 70 mm sphere, 63 mm tall, 7 mm cut flat off the bottom so it
-      sits. Opening underneath 42.00 mm outer, <strong>39.87 mm clear</strong>.</td>
+      sits. Opening underneath 42.00 mm outer, <strong>39.87 mm clear</strong>.<br>
+      <span class="meta"><strong>16 September: the 70 mm is under question.</strong>
+      It was sized for the abandoned XIAO build. <a href="#size">The size</a>.</span></td>
       <td>Purple translucent PET. 0.12&ndash;0.16 mm layers. <strong>100% infill.
       Variable-width perimeters (Arachne) ON. Not vase mode.</strong> No supports.
       <strong>Seam: scarf joint if your slicer offers it, otherwise random.</strong>
@@ -292,6 +294,75 @@
     eccentric weight, not a linear resonant actuator. That was the compromise I
     flagged on 26 August and it still stands.</li>
   </ul>
+
+  <h2 id="size">The size &mdash; open, and 70 mm was sized for a dead build</h2>
+
+  <p>Daniel printed the 70 mm shell on 16 September, put it next to the two
+  M5Stack modules, and said it looked small. He is right, and it is not a matter
+  of taste. The diameter comes from a line written on 26 August whose reason is
+  still attached to it in <code>moon_shell.py</code>:</p>
+
+  <pre>BASE_Z = -28.0   # ...wide enough to get a board, a battery
+                 #  and a thumb inside.</pre>
+
+  <p>That board was the 21 &times; 17.8 mm XIAO and that battery a flat
+  29 &times; 36 &times; 4.75 mm LiPo. <strong>That build was abandoned on
+  2 September</strong>, when the parts became an ATOM Matrix and a TailBat that
+  plug end to end into a rigid 72&ndash;79 mm stick. The diameter was never
+  re-asked &mdash; not on 2 September, not when this page was rewritten on the
+  morning of the 16th, not when the foot was drawn.</p>
+
+  <p>The foot is 68 mm and <em>never scales</em>, because it holds fixed-size
+  parts. Every threshold below is that 68 mm, or the parts, against the shell:</p>
+
+  <table>
+    <tr><th>diameter</th><th>what it buys</th></tr>
+    <tr><td><strong>113 mm</strong></td><td>the moon&rsquo;s own flat (0.6 &times; D)
+      becomes wider than the foot</td></tr>
+    <tr><td><strong>117 mm</strong></td><td>the TailBat alone would pass the mouth</td></tr>
+    <tr><td><strong>141 mm</strong></td><td>both parts inside, with one USB-C
+      extension lead &mdash; still no soldering</td></tr>
+    <tr><td><strong>155 mm</strong></td><td>the rigid stick inside as it is, no cable</td></tr>
+  </table>
+
+  <p>The candidate is <a href="purple-moon-shell-120.stl"><code>purple-moon-shell-120.stl</code></a>
+  &mdash; 120 mm, 260,800 triangles, watertight, 0 bad edges, 0 degenerate,
+  mouth 72.0 mm. <strong>It is regenerated from source, not scaled.</strong> That
+  distinction is the whole point: scaling the printed file 1.714&times; in a slicer
+  takes the wall from 0.90&ndash;2.40 mm to 1.54&ndash;4.11 mm, and transmission
+  through the thin parts falls to about 56% &mdash; a dimmer, muddier moon with the
+  picture washed out of it. The wall has to stay absolute while the ball grows.
+  Crater relief was scaled 0.55 &rarr; 0.943 mm to keep its proportion, and the
+  mesh was made denser so facets came out at 0.573 mm, finer than the 0.863 mm on
+  the printed one. Cost is 2.94&times; the 70 mm in both time and material, since
+  both scale as surface area.</p>
+
+  <figure>
+    <img src="img/compare-side.png" alt="70 mm and 120 mm moons side by side at the same scale">
+    <figcaption>70 mm beside 120 mm, one frame, one scale, orthographic, every
+    triangle read out of the two STL files. <strong>This picture corrected the
+    text.</strong> The draft said that above 113 mm the foot &ldquo;disappears&rdquo;.
+    It does not. It stops being a plinth the moon sits <em>on</em> and becomes a
+    rim the moon sits <em>in</em>.</figcaption>
+  </figure>
+
+  <p><strong>Still open.</strong> Nothing here is decided, and one cheap test gates
+  it: put a torch into the hole of the 70 mm shell in a dark room. The whole design
+  is the wall gradient, and none of it is visible unlit. If the maria go dark the
+  premise holds and this is only a scaling question. If they do not, the fix is
+  <code>WALL_MAX</code> rather than diameter, and a 3&times; print would only have
+  made the wrong thing bigger.</p>
+
+  <p>One thing this section does <em>not</em> claim: that a bigger sphere lights
+  more evenly. That was the hypothesis, and the model written to prove it returned
+  100% uniformity at every diameter &mdash; because a negated surface normal had
+  made every value zero, so the peak was zero and everything passed trivially.
+  Corrected, it agrees with the August model to half a point, and the answer is
+  that size buys nothing optically: <code>foot.py</code> already recesses the ATOM
+  so its LED face sits 0.5 mm <em>below</em> the seat, which is the near-ideal
+  position. The optics were already right.</p>
+
+  <hr>
 
   <h2>The shell, unchanged since 26 August</h2>
 
