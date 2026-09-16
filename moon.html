@@ -46,7 +46,7 @@
     </tr>
     <tr>
       <td><a href="moon-foot.stl"><code>moon-foot.stl</code></a><br>
-      <span class="meta">7.8 MB &middot; 156,072 triangles</span></td>
+      <span class="meta">7.8 MB &middot; 155,876 triangles</span></td>
       <td>The foot the moon stands in, and the case for the electronics.
       68 mm across, 17 mm tall, plus a 4 mm locating boss.</td>
       <td>Same material or any other. 0.2 mm layers, 3 perimeters, 30&ndash;40%
@@ -140,6 +140,16 @@
     on whichever side the table wants.</figcaption>
   </figure>
 
+  <figure>
+    <img src="img/fig-foot-plan.png" alt="The foot from above, showing the pocket, the floor relief and the push-out hole">
+    <figcaption>From above. Inside the pocket there is a shallow 18 mm recess, so
+    the board rests on a ledge round its edge and anything on its underside
+    &mdash; the M2 mounting boss, pads, solder &mdash; has somewhere to go. The
+    hole through the middle is there because a pocket with 0.4 mm of clearance has
+    no other exit: put a finger in from underneath and the ATOM comes back out.
+    The dark band leaving the top of the pocket is the cable channel.</figcaption>
+  </figure>
+
   <table>
     <tr><th>feature</th><th>size</th><th>why</th></tr>
     <tr><td>Disc</td><td>68.00 mm across, 17.0 tall</td>
@@ -150,10 +160,17 @@
     <tr><td>Locating boss</td><td>r = 19.60 mm, 4 mm tall</td>
     <td>Clears the tightest point of the moon&rsquo;s inner rim (19.9332 mm,
     measured) by 0.33 mm all the way round.</td></tr>
-    <tr><td>Cable channel</td><td>15 mm wide, 11.5 mm tall</td>
+    <tr><td>Cable channel</td><td>15 mm wide, 12.5 mm tall</td>
     <td>A USB-C overmould is about 12&ndash;14 wide and 7&ndash;9 tall. It runs
-    right across the disc, under a 3 mm skin.</td></tr>
-    <tr><td>Floor</td><td>2.5 mm</td><td>Solid under the board.</td></tr>
+    right across the disc, under a 2 mm skin. It covers 12.5 mm of the
+    board&rsquo;s 14 mm height because M5Stack publish no drawing showing how high
+    the port sits, and I do not have the part: the plug seats wherever the port
+    turns out to be.</td></tr>
+    <tr><td>Floor</td><td>2.5 mm, with an 18 mm recess 1.2 deep</td>
+    <td>The board rests on a ledge round its edge, clear of anything on its
+    underside.</td></tr>
+    <tr><td>Push-out hole</td><td>10 mm</td>
+    <td>A 0.4 mm clearance pocket has no other exit.</td></tr>
   </table>
 
   <h2>Assembly</h2>
