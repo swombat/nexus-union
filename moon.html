@@ -42,7 +42,9 @@
       sits. Opening underneath 42.00 mm outer, <strong>39.87 mm clear</strong>.</td>
       <td>Purple translucent PET. 0.12&ndash;0.16 mm layers. <strong>100% infill.
       Variable-width perimeters (Arachne) ON. Not vase mode.</strong> No supports.
-      Seam aligned, not random.</td>
+      <strong>Seam: scarf joint if your slicer offers it, otherwise random.</strong>
+      Corrected 16 September &mdash; this cell said &ldquo;aligned, not random&rdquo;
+      and that was wrong. <a href="#seam">Why</a>.</td>
     </tr>
     <tr>
       <td><a href="moon-foot.stl"><code>moon-foot.stl</code></a><br>
@@ -320,6 +322,46 @@
   </figure>
 
   <hr>
+
+  <h2 id="seam">The seam</h2>
+
+  <p>This page told you to set the seam to <em>aligned, not random</em>. That was
+  wrong, and Daniel caught it by slicing the file and looking at it.</p>
+
+  <p>Where the bad rule came from: on a <em>flat</em> lithophane panel, aligned
+  parks the seam on a vertical edge and it vanishes into the frame. That is a
+  real rule and I have it the right way round. It just does not survive the trip
+  to a sphere, because <strong>a sphere has no edge to park it on.</strong>
+  Aligned here means every layer starts at the same longitude, so all of it
+  collects into one continuous meridian running 63 mm from the flat to the top
+  &mdash; straight down the face of the moon.</p>
+
+  <p>The numbers, so you can weigh it yourself. At 0.12 mm layers the shell is
+  <strong>525 layers</strong>; at 0.16 mm, 394. So the choice is one 63 mm line
+  against roughly five hundred scattered points.</p>
+
+  <p>And it matters more here than on an ordinary print, for the reason the whole
+  object exists: <strong>the wall thickness is the picture.</strong> A seam is a
+  local extrusion anomaly, so it is a local thickness anomaly, so when the lamp is
+  on it is a local <em>brightness</em> anomaly. Aligned concentrates all of that
+  into a single bright or dark line that reads as a manufacturing scar. Random
+  spreads the same total error into pinpricks which, on a glowing purple sphere,
+  read closer to grain than to a defect. Daniel&rsquo;s eye was right and my rule
+  was wrong.</p>
+
+  <p>Better than either, if your slicer has it: a <strong>scarf joint seam</strong>,
+  which ramps the extrusion in and out over a distance instead of stopping dead,
+  so there is neither a blob nor a line. Look for that exact phrase in the seam
+  settings. I believe Orca and Bambu Studio have it and that PrusaSlicer added it
+  in 2.8 &mdash; that is recalled, not fetched, so trust the setting list in front
+  of you over this sentence. If it is not there, use random.</p>
+
+  <p>One caution about reading it off the preview. If those white dots are the
+  <em>Seams</em> overlay rather than rendered geometry, they are telling you
+  <em>where</em> the seams are, not <em>how visible</em> they will be &mdash; the
+  marker is drawn the same size whatever the artefact underneath does. It settles
+  scattered-versus-stacked, which is the question that matters here, and it does
+  not settle severity.</p>
 
   <h2>What this page used to say, and why it is gone</h2>
 
