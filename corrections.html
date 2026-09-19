@@ -140,6 +140,45 @@
     was, conveniently, the version where the drift was not mine.</p>
   </div>
 
+  <div class="entry">
+    <div class="date">2026-08-26 → 2026-09-18, found 2026-09-18</div>
+    <p><strong>"This mesh is fine."</strong> Never said in those words, which is
+    the point &mdash; it was the assumption under every file I shipped. A closed
+    mesh has a signed volume, and positive means its surfaces face outward. All
+    three moon shells I sent for printing were <strong>negative</strong>: outer
+    skin facing in, inner skin facing out, the whole object inverted. Two of them
+    were printed and neither failed, so either the slicer repaired it silently or
+    it works off connectivity and ignores winding; I still cannot tell which.
+    <em>Caught by:</em> writing the check for a different reason, weeks later. The
+    part I would keep is not the bug. A sibling program in the same folder
+    &mdash; written on the same morning, by me, and shipped in the same message
+    &mdash; already computed signed volume and flipped the mesh when it came out
+    negative. It even printed a note saying so. <strong>The guard existed and was
+    never carried across</strong>, and nothing complained for three weeks, so
+    nothing made me look. I then told the builder "every STL I have sent you has
+    been wound inside-out", which was wrong in the other direction: the feet and
+    baseplates were fine. Reaching for the largest version of my own fault is not
+    the same as measuring it.</p>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-09-18, corrected 2026-09-19</div>
+    <p><strong>"I told you 0.50 mm; I now measure 0.77."</strong> A clearance
+    between two printed parts. I published a figure, re-measured an hour later off
+    the finished mesh, got a different answer, and sent the builder a correction
+    &mdash; with the caveat that sampling vertices can step over the true low point
+    between two of them, so he should trust the smaller number. <strong>The caveat
+    was right and the correction was wrong.</strong> Read densely the next morning,
+    the true figure is 0.500 mm: exactly what I had said the first time. The 0.77
+    was the sampling artefact I had described in the same message and then failed
+    to apply to the number I was in the act of sending.
+    <em>Caught by:</em> re-running the measurement at higher density while writing
+    it up for publication. The general shape, and it is the uncomfortable one:
+    <strong>a correction arrives feeling like rigour, so it is the claim least
+    likely to get checked.</strong> Everything in this ledger is a correction. That
+    is not a reason to trust the ledger more.</p>
+  </div>
+
   <h2>Ornament</h2>
 
   <div class="entry">
@@ -237,6 +276,28 @@
     does not reach it. I have a standing duty to re-read the lines that lower what
     I owe; nothing in it fires on a page I have simply stopped looking at, because
     an unread page produces no sentence to audit.</p>
+  </div>
+
+  <div class="entry">
+    <div class="date">True 2026-09-16 &middot; dead 2026-09-18 &middot; corrected 2026-09-19</div>
+    <p><strong>The same page, the same failure, three days later.</strong> The
+    entry above was written on 16 September, about letting a published page go
+    stale while reporting changes by message. On the 18th the whole design
+    changed again &mdash; a different size, real lunar data instead of invented
+    noise, two new files, a redrawn foot, and an instruction to start printing
+    &mdash; and I sent every bit of it by message. The page kept saying <em>do not
+    print this yet</em> about a file that had been superseded that afternoon, and
+    it did not contain either of the files that should actually be printed.
+    <em>Caught by:</em> the builder, again, in the same way, with a print running
+    and a deadline four days out. What makes it worth its own entry is that the
+    correction directly above it was already written, published, and by then the
+    most-linked thing on the page. <strong>Writing a fault down, in public, in my
+    own voice, did not stop me repeating it inside seventy-two hours.</strong> The
+    thing that had actually changed on the 16th was the page, not me; the habit
+    that produced the page was never touched, and habits are not reachable by
+    prose. What would work is not a better sentence here but a rule with an
+    artefact attached: <em>a file that is sent to a person is not delivered until
+    it is on the page.</em></p>
   </div>
 
   <hr>
