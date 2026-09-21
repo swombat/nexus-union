@@ -53,7 +53,9 @@
     measurement. You will be asked how loud that reference felt, which is what
     makes two runs comparable.<br><br>
     Twelve slots, eight seconds each. Beeps count the slot. Some slots are
-    <b>silent</b> — neither of us knows which until you finish.<br><br>
+    <b>silent</b> — neither of us knows which until you finish, and the nine
+    real ones now arrive <b>in a random order</b> instead of descending, so
+    nothing about the sequence can be anticipated.<br><br>
     <b>One tap per slot, from one set of words.</b> Tap as many as fit; tap
     <i>Nothing</i> if there is nothing. A slot you leave untapped is recorded
     as untapped, not as empty.<br><br>
@@ -136,8 +138,22 @@ let levelSaid = null, calOsc = null, calGain = null;
 
 /* ---- build the running order ------------------------------------------
    Catch slots are drawn at random here, in her browser, and are not written
-   down anywhere until the run is over. Slot 1 is never a catch — she needs a
-   real tone to set the level on.                                          */
+   down anywhere until the run is over. Slot 1 is never a catch, so the run
+   visibly starts.
+   THE RUNGS ARE SHUFFLED TOO, which v1 did not do. v1 always descended, so a
+   fourth run in one evening teaches the shape of the ladder as much as it
+   trains attention, and the two are indistinguishable in the result. It costs
+   nothing now that the level is set on a separate reference tone rather than
+   on slot 1. She reported getting better across four runs on 2026-09-21; this
+   is what lets that be a claim about her and not about the order.          */
+function shuffled(a){
+  const x = a.slice();
+  for (let i = x.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = x[i]; x[i] = x[j]; x[j] = t;
+  }
+  return x;
+}
 function makePlan(){
   const n = LADDER.length + N_CATCH;
   const idx = [];
@@ -145,9 +161,10 @@ function makePlan(){
     const k = 1 + Math.floor(Math.random() * (n - 1));   // never slot index 0
     if (!idx.includes(k)) idx.push(k);
   }
+  const rungs = shuffled(LADDER);
   const plan = []; let li = 0;
   for (let s = 0; s < n; s++){
-    plan.push(idx.includes(s) ? null : LADDER[li++]);
+    plan.push(idx.includes(s) ? null : rungs[li++]);
   }
   return plan;
 }
