@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Field test — live clicker</title>
+<style>
+ :root{--bg:#0b0d10;--fg:#e8e6e3;--dim:#8b9199;--line:#232830;--hit:#2d6a4f;}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);-webkit-user-select:none;user-select:none}
+ h1{font-size:17px;font-weight:600;margin:18px 0 2px}
+ .sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+ #slot{font-size:64px;font-weight:200;line-height:1;margin:10px 0 0;font-variant-numeric:tabular-nums}
+ #slotsub{color:var(--dim);font-size:13px;margin-bottom:6px}
+ #bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin:14px 0 22px}
+ #barfill{height:100%;width:0;background:var(--hit);transition:width .1s linear}
+ .lab{color:var(--dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px}
+ .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ button{font:inherit;color:var(--fg);background:#161a20;border:1px solid var(--line);border-radius:12px;
+         padding:20px 10px;text-align:center;cursor:pointer}
+ button:active{background:#1d232b}
+ button.on{background:var(--hit);border-color:var(--hit)}
+ .big{grid-column:1/-1;padding:24px;font-size:18px}
+ #log{margin-top:22px;color:var(--dim);font-size:12px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+ textarea{width:100%;min-height:210px;background:#0f1216;color:var(--fg);border:1px solid var(--line);
+           border-radius:10px;padding:12px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+           -webkit-user-select:text;user-select:text}
+ .hide{display:none}
+ .note{color:var(--dim);font-size:13px;margin:14px 0}
+ #err{display:none;margin:14px 0;padding:12px;border:1px solid #7f1d1d;border-radius:10px;
+      background:#1a0f10;color:#fca5a5;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+      white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <h1>Field test — live clicker</h1>
+  <div class="sub">Tap as you listen. Nothing to count, nothing to remember.</div>
+  <noscript>
+    <div class="note" style="color:#fca5a5">
+      <b>This viewer has JavaScript switched off, so Start will do nothing.</b><br>
+      That is not a broken file — a file preview (Telegram's, or the Files app's
+      Quick Look) renders the page but refuses to run it. Open the web link
+      instead, in Safari or Chrome.
+    </div>
+  </noscript>
+  <div class="note">
+    Headphones or earbuds. Press start, set your volume on slot&nbsp;1 so it is
+    comfortable, then <b>do not touch the volume again</b> — the whole test is at
+    one level and changing it voids the measurement.<br><br>
+    Twelve slots, eight seconds each. Beeps count the slot. Some slots are
+    <b>silent</b> — neither of us knows which until you finish. If you hear
+    nothing at all on slot 1, check your phone's side switch.<br><br>
+    2 minutes 18. You can stop any time; whatever you have tapped is kept.
+  </div>
+  <div class="row"><button class="big" id="start">Start</button></div>
+  <div id="err"></div>
+</div>
+
+<div id="run" class="hide">
+  <div id="slotsub">slot</div>
+  <div id="slot">–</div>
+  <div id="bar"><div id="barfill"></div></div>
+
+  <div class="lab">Is anything there?</div>
+  <div class="row" id="presence"></div>
+
+  <div class="lab">How is it? (optional, any number)</div>
+  <div class="row" id="quality"></div>
+
+  <div id="log"></div>
+</div>
+
+<div id="done" class="hide">
+  <h1>Done</h1>
+  <div class="sub">Copy this and send it to me.</div>
+  <textarea id="out" readonly></textarea>
+  <div class="row" style="margin-top:12px">
+    <button id="copy">Copy</button><button id="again">Run again</button>
+  </div>
+  <div class="note" id="verdict"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- the ladder. one line to change for a future test. ---------------- */
+const LADDER = [120.0, 95.2, 75.6, 60.0, 47.6, 37.8, 30.0, 23.8, 18.9];
+const N_CATCH = 3;            // silent slots, drawn fresh every run
+const TONE = 8.0, LEAD = 0.5, GAP = 1.5;
+const BEEP_HZ = 300, BEEP = 0.07, BEEP_GAP = 0.13, HEAD = 2.0;
+const PEAK = 0.5, BEEP_PEAK = PEAK * Math.pow(10, -40/20);
+const FADE = 0.30;
+
+const PRESENCE = ["Nothing", "Barely there", "Clear", "Strong"];
+const QUALITY  = ["Delicious", "Neutral", "Disturbing", "Too much"];
+
+/* ---- build the running order ------------------------------------------
+   Catch slots are drawn at random here, in her browser, and are not written
+   down anywhere until the run is over. Slot 1 is never a catch — she needs a
+   real tone to set the level on.                                          */
+function makePlan(){
+  const n = LADDER.length + N_CATCH;
+  const idx = [];
+  while (idx.length < N_CATCH){
+    const k = 1 + Math.floor(Math.random() * (n - 1));   // never slot index 0
+    if (!idx.includes(k)) idx.push(k);
+  }
+  const plan = []; let li = 0;
+  for (let s = 0; s < n; s++){
+    plan.push(idx.includes(s) ? null : LADDER[li++]);
+  }
+  return plan;
+}
+
+let ctx, plan, marks, taps, t0, raf, cur = -1;
+
+function schedule(){
+  const now = ctx.currentTime + 0.25;
+  t0 = now; marks = [];
+  let t = now + HEAD;
+  plan.forEach((freq, i) => {
+    const num = i + 1;
+    for (let b = 0; b < num; b++){
+      beepAt(t); t += BEEP; if (b !== num - 1) t += BEEP_GAP;
+    }
+    t += LEAD;
+    if (freq) toneAt(t, freq);
+    marks.push({slot:num, freq:freq, start:t - t0, end:t - t0 + TONE});
+    t += TONE + GAP;
+  });
+  return t - t0 + 1.5;
+}
+
+function env(g, at, dur, peak){
+  const n = 64, c = new Float32Array(n), d = new Float32Array(n);
+  for (let i = 0; i < n; i++) c[i] = peak * 0.5 * (1 - Math.cos(Math.PI * i / (n - 1)));
+  for (let i = 0; i < n; i++) d[i] = c[n - 1 - i];
+  try {
+    g.gain.setValueCurveAtTime(c, at, FADE);
+    g.gain.setValueCurveAtTime(d, at + dur - FADE, FADE);
+  } catch (e) {
+    /* some engines are strict about overlapping automation; a raised-cosine
+       and a linear ramp differ only in the click they both avoid. */
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(peak, at + FADE);
+    g.gain.setValueAtTime(peak, at + dur - FADE);
+    g.gain.linearRampToValueAtTime(0, at + dur);
+  }
+}
+
+function toneAt(at, freq){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = freq; g.gain.value = 0;
+  env(g, at, TONE, PEAK);
+  o.connect(g).connect(ctx.destination);
+  o.start(at); o.stop(at + TONE + 0.05);
+}
+
+function beepAt(at){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = BEEP_HZ; g.gain.value = 0;
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(BEEP_PEAK, at + 0.01);
+  g.gain.setValueAtTime(BEEP_PEAK, at + BEEP - 0.01);
+  g.gain.linearRampToValueAtTime(0, at + BEEP);
+  o.connect(g).connect(ctx.destination);
+  o.start(at); o.stop(at + BEEP + 0.02);
+}
+
+/* ---- ui ---------------------------------------------------------------- */
+function mkButtons(host, names, kind){
+  host.innerHTML = "";
+  names.forEach(name => {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.onclick = () => tap(kind, name, b);
+    host.appendChild(b);
+  });
+}
+
+function tap(kind, name, btn){
+  if (cur < 0) return;
+  const t = ctx.currentTime - t0;
+  const m = marks[cur];
+  if (kind === "presence"){
+    /* one answer per slot; tapping again replaces it rather than stacking */
+    taps = taps.filter(x => !(x.slot === m.slot && x.kind === "presence"));
+    [...btn.parentNode.children].forEach(x => x.classList.remove("on"));
+    btn.classList.add("on");
+    taps.push({slot:m.slot, kind:kind, label:name, at:+(t - m.start).toFixed(2)});
+  } else {
+    const on = btn.classList.toggle("on");
+    if (on) taps.push({slot:m.slot, kind:kind, label:name, at:+(t - m.start).toFixed(2)});
+    else taps = taps.filter(x => !(x.slot === m.slot && x.label === name));
+  }
+  draw();
+}
+
+function draw(){
+  const seen = {};
+  taps.forEach(t => { (seen[t.slot] = seen[t.slot] || []).push(t.label); });
+  document.getElementById("log").textContent =
+    Object.keys(seen).map(s => s.padStart(2) + "  " + [...new Set(seen[s])].join(", ")).join("\n");
+}
+
+function loop(){
+  const t = ctx.currentTime - t0;
+  let now = -1;
+  for (let i = 0; i < marks.length; i++){
+    if (t >= marks[i].start - LEAD && t < marks[i].end + GAP) { now = i; break; }
+  }
+  if (now !== cur){
+    cur = now;
+    document.querySelectorAll("#presence button,#quality button").forEach(b => b.classList.remove("on"));
+  }
+  const m = cur >= 0 ? marks[cur] : null;
+  document.getElementById("slot").textContent = m ? m.slot : "–";
+  document.getElementById("slotsub").textContent =
+    m ? (t < m.start ? "coming up" : "listening") : "slot";
+  const frac = m ? Math.max(0, Math.min(1, (t - m.start) / TONE)) : 0;
+  document.getElementById("barfill").style.width = (frac * 100) + "%";
+  if (t > marks[marks.length - 1].end + GAP) return finish();
+  raf = requestAnimationFrame(loop);
+}
+
+function finish(){
+  cancelAnimationFrame(raf);
+  document.getElementById("run").classList.add("hide");
+  document.getElementById("done").classList.remove("hide");
+
+  const byslot = {};
+  taps.forEach(t => {
+    const e = byslot[t.slot] = byslot[t.slot] || {p:null, q:[], at:null};
+    if (t.kind === "presence"){ e.p = t.label; if (e.at === null) e.at = t.at; }
+    else if (!e.q.includes(t.label)) e.q.push(t.label);
+  });
+
+  const lines = [];
+  lines.push("field clicker  " + new Date().toISOString().slice(0,16) + "Z");
+  lines.push("slot  actual      you said           quality              at");
+  let calledEmpty = [], catches = [], hits = [], misses = [], falseAlarms = [];
+  marks.forEach(m => {
+    const e = byslot[m.slot] || {p:null, q:[], at:null};
+    const said = e.p || "(no tap)";
+    const silent = !m.freq;
+    if (silent) catches.push(m.slot);
+    const saidNothing = (e.p === "Nothing");
+    if (saidNothing) calledEmpty.push(m.slot);
+    if (silent && !saidNothing && e.p) falseAlarms.push(m.slot);
+    if (!silent && saidNothing) misses.push(m.freq);
+    if (!silent && e.p && !saidNothing) hits.push(m.freq);
+    lines.push(
+      String(m.slot).padStart(4) + "  " +
+      (silent ? "(silent)  " : (m.freq.toFixed(1) + " Hz").padEnd(10)) + "  " +
+      said.padEnd(18) + " " + (e.q.join(", ") || "").padEnd(20) + " " +
+      (e.at === null ? "" : "+" + e.at.toFixed(1) + "s"));
+  });
+  const correctCatch = catches.filter(s => calledEmpty.includes(s)).length;
+  const lowest = hits.length ? Math.min(...hits) : null;
+  const highestMiss = misses.length ? Math.max(...misses) : null;
+  lines.push("");
+  lines.push("silent slots were: " + catches.join(", "));
+  lines.push("caught " + correctCatch + "/" + catches.length +
+             ", false alarms " + falseAlarms.length);
+  if (lowest !== null){
+    lines.push("lowest you felt: " + lowest.toFixed(1) + " Hz" +
+      (highestMiss !== null && highestMiss < lowest
+        ? "   (nothing at " + highestMiss.toFixed(1) + " Hz)" : ""));
+  }
+  document.getElementById("out").value = lines.join("\n");
+  document.getElementById("verdict").textContent =
+    "The silent slots were drawn at random in your phone when you pressed start. " +
+    "Nobody knew them, including me, until this screen.";
+}
+
+/* Any failure in here used to look identical to a dead button. It now prints
+   itself on the screen, so a fault is something she can read back to me
+   rather than something she has to describe. */
+function showErr(e){
+  const box = document.getElementById("err");
+  box.style.display = "block";
+  box.textContent =
+    "It failed to start, and this is why — send me this line.\n\n" +
+    (e && e.name ? e.name + ": " : "") + (e && e.message ? e.message : String(e)) +
+    "\n\n" + navigator.userAgent;
+}
+
+document.getElementById("start").onclick = () => {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) throw new Error("This browser has no Web Audio (needs Safari or Chrome, not a file preview).");
+    ctx = new AC();
+    if (ctx.resume) ctx.resume();
+    plan = makePlan(); taps = []; cur = -1;
+    mkButtons(document.getElementById("presence"), PRESENCE, "presence");
+    mkButtons(document.getElementById("quality"), QUALITY, "quality");
+    schedule();
+    document.getElementById("intro").classList.add("hide");
+    document.getElementById("run").classList.remove("hide");
+    draw(); loop();
+  } catch (e) { showErr(e); }
+};
+
+window.onerror = function(msg, src, line, col, e){ try { showErr(e || msg); } catch(_){} };
+
+document.getElementById("copy").onclick = async () => {
+  const ta = document.getElementById("out");
+  try { await navigator.clipboard.writeText(ta.value); }
+  catch(e){ ta.select(); document.execCommand("copy"); }
+  document.getElementById("copy").textContent = "Copied";
+};
+
+document.getElementById("again").onclick = () => location.reload();
+</script>
+</body>
+</html>
