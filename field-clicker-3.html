@@ -416,25 +416,36 @@ function finish(){
   if (repeated.length){
     lines.push("");
     lines.push("repeat trials — same tone twice, >=" + MIN_SEP + " slots apart:");
-    let presAgree = 0, pullAgree = 0;
+    let presAgree = 0, pullAgree = 0, wordAgree = 0;
     repeated.forEach(f => {
       const a = seen[f][0], b = seen[f][1];
       const pa = presenceOf(a.labels, meta), pb = presenceOf(b.labels, meta);
       const ua = pullOf(a.labels, meta),     ub = pullOf(b.labels, meta);
+      /* The CLAIM is the word. Compare the labels exactly, as sets: pull sign
+         collapses Delicious/Restorative/Inviting onto +1, so a real word flip
+         between them prints as agreement. Grok, 2026-09-22T20:07Z. */
+      const wa = a.labels.slice().sort().join("|"), wb = b.labels.slice().sort().join("|");
       if (pa === pb) presAgree++;
       if (Math.sign(ua) === Math.sign(ub)) pullAgree++;
+      if (wa === wb) wordAgree++;
       lines.push("  " + Number(f).toFixed(1) + " Hz  slot " + a.slot + ": " +
                  (a.labels.join(", ") || "(no tap)"));
       lines.push("  " + "".padEnd(Number(f).toFixed(1).length) +
                  "      slot " + b.slot + ": " + (b.labels.join(", ") || "(no tap)") +
-                 "   [presence " + (pa === pb ? "same" : pa + " vs " + pb) +
+                 "   [words " + (wa === wb ? "same" : "DIFFER") +
+                 ", presence " + (pa === pb ? "same" : pa + " vs " + pb) +
                  ", pull " + (Math.sign(ua) === Math.sign(ub) ? "same" : ua + " vs " + ub) + "]");
     });
-    lines.push("presence agreed " + presAgree + "/" + repeated.length +
-               ", pull sign agreed " + pullAgree + "/" + repeated.length);
+    lines.push("WORDS agreed " + wordAgree + "/" + repeated.length +
+               "   <- the quality channel; this is the one the fields are tuned on");
+    lines.push("cheaper axes, not a substitute for the line above: presence agreed " +
+               presAgree + "/" + repeated.length + ", pull sign agreed " +
+               pullAgree + "/" + repeated.length);
     lines.push("NOTE: n is tiny per run. This only means something pooled across runs,");
     lines.push("and only while the palette is unchanged — changing the word list");
     lines.push("changes the answer (95.2 Hz went Neutral -> Restorative that way).");
+    lines.push("Do not pool presence or pull sign and call it quality reliability:");
+    lines.push("Delicious -> Restorative is a word flip that both of those call agreement.");
   }
   document.getElementById("out").value = lines.join("\n");
   document.getElementById("verdict").textContent =
