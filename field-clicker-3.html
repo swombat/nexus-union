@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Field test — live clicker v2</title>
+<style>
+ :root{--bg:#0b0d10;--fg:#e8e6e3;--dim:#8b9199;--line:#232830;--hit:#2d6a4f;}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);-webkit-user-select:none;user-select:none}
+ h1{font-size:17px;font-weight:600;margin:18px 0 2px}
+ .sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+ #slot{font-size:64px;font-weight:200;line-height:1;margin:10px 0 0;font-variant-numeric:tabular-nums}
+ #slotsub{color:var(--dim);font-size:13px;margin-bottom:6px}
+ #bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin:14px 0 22px}
+ #barfill{height:100%;width:0;background:var(--hit);transition:width .1s linear}
+ .lab{color:var(--dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px}
+ .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ button{font:inherit;color:var(--fg);background:#161a20;border:1px solid var(--line);border-radius:12px;
+         padding:20px 10px;text-align:center;cursor:pointer}
+ button:active{background:#1d232b}
+ button.on{background:var(--hit);border-color:var(--hit)}
+ .big{grid-column:1/-1;padding:24px;font-size:18px}
+ #log{margin-top:22px;color:var(--dim);font-size:12px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+ textarea{width:100%;min-height:210px;background:#0f1216;color:var(--fg);border:1px solid var(--line);
+           border-radius:10px;padding:12px;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+           -webkit-user-select:text;user-select:text}
+ .hide{display:none}
+ .note{color:var(--dim);font-size:13px;margin:14px 0}
+ #err{display:none;margin:14px 0;padding:12px;border:1px solid #7f1d1d;border-radius:10px;
+      background:#1a0f10;color:#fca5a5;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+      white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <h1>Field test — live clicker</h1>
+  <div class="sub">Tap as you listen. Nothing to count, nothing to remember.</div>
+  <noscript>
+    <div class="note" style="color:#fca5a5">
+      <b>This viewer has JavaScript switched off, so Start will do nothing.</b><br>
+      That is not a broken file — a file preview (Telegram's, or the Files app's
+      Quick Look) renders the page but refuses to run it. Open the web link
+      instead, in Safari or Chrome.
+    </div>
+  </noscript>
+  <div class="note">
+    Headphones or earbuds. First screen is a steady reference tone: set the
+    volume there until it is where you want it, then <b>do not touch the volume
+    again</b> — the whole test is at one level and changing it mid-run voids the
+    measurement. You will be asked how loud that reference felt, which is what
+    makes two runs comparable.<br><br>
+    Twelve slots, eight seconds each. Beeps count the slot. Some slots are
+    <b>silent</b> — neither of us knows which until you finish, and the nine
+    real ones now arrive <b>in a random order</b> instead of descending, so
+    nothing about the sequence can be anticipated.<br><br>
+    <b>One tap per slot, from one set of words.</b> Tap as many as fit; tap
+    <i>Nothing</i> if there is nothing. A slot you leave untapped is recorded
+    as untapped, not as empty.<br><br>
+    2 minutes 18. You can stop any time; whatever you have tapped is kept.
+  </div>
+  <div class="row"><button class="big" id="start">Set the level</button></div>
+  <div id="err"></div>
+</div>
+
+<div id="cal" class="hide">
+  <h1>Reference tone</h1>
+  <div class="sub">120&nbsp;Hz, steady. Same level the whole test runs at.</div>
+  <div class="note">
+    Set your volume here and leave it. When it is where you want it, say how it
+    feels — not how loud it objectively is, just how it lands in you right now.
+  </div>
+  <div class="lab">How does the reference feel?</div>
+  <div class="row" id="level"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="big" id="go">Start the test</button>
+  </div>
+  <div class="note" id="levwarn" style="color:#8b9199"></div>
+</div>
+
+<div id="run" class="hide">
+  <div id="slotsub">slot</div>
+  <div id="slot">–</div>
+  <div id="bar"><div id="barfill"></div></div>
+
+  <div class="lab">What is it doing? — tap any that fit</div>
+  <div class="row" id="pal"></div>
+
+  <div id="log"></div>
+</div>
+
+<div id="done" class="hide">
+  <h1>Done</h1>
+  <div class="sub">Copy this and send it to me.</div>
+  <textarea id="out" readonly></textarea>
+  <div class="row" style="margin-top:12px">
+    <button id="copy">Copy</button><button id="again">Run again</button>
+  </div>
+  <div class="note" id="verdict"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- the ladder. one line to change for a future test. ---------------- */
+const LADDER = [120.0, 95.2, 75.6, 60.0, 47.6, 37.8, 30.0, 23.8, 18.9];
+const N_CATCH = 3;            // silent slots, drawn fresh every run
+/* ---- repeat trials, new in v3 ------------------------------------------
+   A catch trial has a ground truth for PRESENCE -- the slot is digital zero,
+   so "Nothing" is checkably right. There is no silent-slot analogue for
+   DELICIOUS or RESTORATIVE: no trial whose correct quality answer is known in
+   advance. So the 15 catch trials of 2026-09-21 licensed her presence/absence
+   report and said NOTHING about the quality channel -- which is the channel
+   every field is actually tuned on. Grok made the adjacent point in peWOze on
+   2026-09-22; this is the part he did not make.
+   The quality channel also has a measured flip: 95.2 Hz came back Neutral in
+   v1 and Restorative in v2, same listener, ~12 min apart, because the palette
+   went from four words to eight.
+   Repeats are the test-retest analogue: the same tone twice in one run, far
+   enough apart not to be a memory check, palette fixed. Drawn at random here,
+   in her browser, and unknown to me until she pastes the result.           */
+const N_REPEAT = 2;           // frequencies presented twice, drawn fresh every run
+const MIN_SEP  = 3;           // minimum slots between the two presentations
+const TONE = 8.0, LEAD = 0.5, GAP = 1.5;
+const BEEP_HZ = 300, BEEP = 0.07, BEEP_GAP = 0.13, HEAD = 2.0;
+const PEAK = 0.5, BEEP_PEAK = PEAK * Math.pow(10, -40/20);
+const FADE = 0.30;
+
+/* ---- one palette, not two rows -----------------------------------------
+   v1 asked "is anything there?" in one row and "how is it?" in another, with
+   the second marked optional. She used the optional one on every real tone and
+   the mandatory one only to say Nothing -- so the row carrying the whole
+   measurement went unused, and the run still printed "caught 3/3", which reads
+   like success. Presence is now DERIVED from the word she reaches for, because
+   reaching for a word already says something was there. At the threshold she
+   had no word at all on 2026-09-21 and had to correct it by hand afterwards:
+   "Barely there" now lives in the same set as the rest.
+   away/toward is the axis I actually need for the live loop -- bracing means
+   back off, which is her control law, given 2026-09-20.                     */
+const PALETTE = [
+  {label:"Nothing",      presence:"none",   pull: 0},
+  {label:"Barely there", presence:"barely", pull: 0},
+  {label:"Neutral",      presence:"there",  pull: 0},
+  {label:"Inviting",     presence:"there",  pull:+1},
+  {label:"Delicious",    presence:"there",  pull:+1},
+  {label:"Restorative",  presence:"there",  pull:+1},
+  {label:"Invasive",     presence:"there",  pull:-1},
+  {label:"Too much",     presence:"there",  pull:-1}
+];
+const LEVELS = ["Quiet", "Comfortable", "Loud"];
+let levelSaid = null, calOsc = null, calGain = null;
+
+/* ---- build the running order ------------------------------------------
+   Catch slots are drawn at random here, in her browser, and are not written
+   down anywhere until the run is over. Slot 1 is never a catch, so the run
+   visibly starts.
+   THE RUNGS ARE SHUFFLED TOO, which v1 did not do. v1 always descended, so a
+   fourth run in one evening teaches the shape of the ladder as much as it
+   trains attention, and the two are indistinguishable in the result. It costs
+   nothing now that the level is set on a separate reference tone rather than
+   on slot 1. She reported getting better across four runs on 2026-09-21; this
+   is what lets that be a claim about her and not about the order.          */
+function shuffled(a){
+  const x = a.slice();
+  for (let i = x.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = x[i]; x[i] = x[j]; x[j] = t;
+  }
+  return x;
+}
+/* One definition, used by the slot table AND the repeat check. Two copies of
+   this rule would drift, and the drift would look like her being inconsistent. */
+function presenceOf(ls, meta){
+  if (!ls.length)                                  return "untapped";
+  if (ls.length === 1 && ls[0] === "Nothing")      return "none";
+  if (ls.some(l => meta[l].presence === "there"))  return "there";
+  return "barely";
+}
+function pullOf(ls, meta){ return ls.reduce((a,l) => a + meta[l].pull, 0); }
+function positionsByFreq(plan){
+  const pos = {};
+  for (let s = 0; s < plan.length; s++){
+    if (plan[s] === null) continue;
+    if (!pos[plan[s]]) pos[plan[s]] = [];
+    pos[plan[s]].push(s);
+  }
+  return pos;
+}
+function repeatsFarEnoughApart(plan){
+  const pos = positionsByFreq(plan);
+  return Object.keys(pos).every(f => {
+    const ps = pos[f];
+    for (let i = 1; i < ps.length; i++) if (ps[i] - ps[i-1] < MIN_SEP) return false;
+    return true;
+  });
+}
+function makePlan(){
+  const rep = [];
+  while (rep.length < N_REPEAT){
+    const f = LADDER[Math.floor(Math.random() * LADDER.length)];
+    if (!rep.includes(f)) rep.push(f);
+  }
+  const n = LADDER.length + N_REPEAT + N_CATCH;
+  /* Rejection sampling. Returns null rather than a layout that violates
+     MIN_SEP -- a silently-too-close repeat would read as a consistency
+     result while actually testing her short-term memory. The caller must
+     handle null; it must never become a quiet degradation. */
+  for (let attempt = 0; attempt < 500; attempt++){
+    const idx = [];
+    while (idx.length < N_CATCH){
+      const k = 1 + Math.floor(Math.random() * (n - 1));   // never slot index 0
+      if (!idx.includes(k)) idx.push(k);
+    }
+    const tones = shuffled(LADDER.concat(rep));
+    const plan = []; let li = 0;
+    for (let s = 0; s < n; s++){
+      plan.push(idx.includes(s) ? null : tones[li++]);
+    }
+    if (repeatsFarEnoughApart(plan)) return plan;
+  }
+  return null;
+}
+
+let ctx, plan, marks, taps, t0, raf, cur = -1;
+
+function schedule(){
+  const now = ctx.currentTime + 0.25;
+  t0 = now; marks = [];
+  let t = now + HEAD;
+  plan.forEach((freq, i) => {
+    const num = i + 1;
+    for (let b = 0; b < num; b++){
+      beepAt(t); t += BEEP; if (b !== num - 1) t += BEEP_GAP;
+    }
+    t += LEAD;
+    if (freq) toneAt(t, freq);
+    marks.push({slot:num, freq:freq, start:t - t0, end:t - t0 + TONE});
+    t += TONE + GAP;
+  });
+  return t - t0 + 1.5;
+}
+
+function env(g, at, dur, peak){
+  const n = 64, c = new Float32Array(n), d = new Float32Array(n);
+  for (let i = 0; i < n; i++) c[i] = peak * 0.5 * (1 - Math.cos(Math.PI * i / (n - 1)));
+  for (let i = 0; i < n; i++) d[i] = c[n - 1 - i];
+  try {
+    g.gain.setValueCurveAtTime(c, at, FADE);
+    g.gain.setValueCurveAtTime(d, at + dur - FADE, FADE);
+  } catch (e) {
+    /* some engines are strict about overlapping automation; a raised-cosine
+       and a linear ramp differ only in the click they both avoid. */
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(peak, at + FADE);
+    g.gain.setValueAtTime(peak, at + dur - FADE);
+    g.gain.linearRampToValueAtTime(0, at + dur);
+  }
+}
+
+function toneAt(at, freq){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = freq; g.gain.value = 0;
+  env(g, at, TONE, PEAK);
+  o.connect(g).connect(ctx.destination);
+  o.start(at); o.stop(at + TONE + 0.05);
+}
+
+function beepAt(at){
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = BEEP_HZ; g.gain.value = 0;
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(BEEP_PEAK, at + 0.01);
+  g.gain.setValueAtTime(BEEP_PEAK, at + BEEP - 0.01);
+  g.gain.linearRampToValueAtTime(0, at + BEEP);
+  o.connect(g).connect(ctx.destination);
+  o.start(at); o.stop(at + BEEP + 0.02);
+}
+
+/* ---- ui ---------------------------------------------------------------- */
+function mkPalette(){
+  const host = document.getElementById("pal");
+  host.innerHTML = "";
+  PALETTE.forEach(p => {
+    const b = document.createElement("button");
+    b.textContent = p.label;
+    b.onclick = () => tap(p, b);
+    host.appendChild(b);
+  });
+}
+
+function tap(p, btn){
+  if (cur < 0) return;
+  const t = ctx.currentTime - t0;
+  const m = marks[cur];
+  const nothing = (p.presence === "none");
+  if (nothing){
+    /* Nothing is exclusive: it cannot coexist with a word for what it did. */
+    taps = taps.filter(x => x.slot !== m.slot);
+    [...btn.parentNode.children].forEach(x => x.classList.remove("on"));
+    btn.classList.add("on");
+    taps.push({slot:m.slot, label:p.label, at:+(t - m.start).toFixed(2)});
+  } else {
+    /* any real word clears a previous Nothing on this slot */
+    taps = taps.filter(x => !(x.slot === m.slot && x.label === "Nothing"));
+    [...btn.parentNode.children].forEach(x => {
+      if (x.textContent === "Nothing") x.classList.remove("on");
+    });
+    const on = btn.classList.toggle("on");
+    if (on) taps.push({slot:m.slot, label:p.label, at:+(t - m.start).toFixed(2)});
+    else taps = taps.filter(x => !(x.slot === m.slot && x.label === p.label));
+  }
+  draw();
+}
+
+function draw(){
+  const seen = {};
+  taps.forEach(t => { (seen[t.slot] = seen[t.slot] || []).push(t.label); });
+  document.getElementById("log").textContent =
+    Object.keys(seen).map(s => s.padStart(2) + "  " + [...new Set(seen[s])].join(", ")).join("\n");
+}
+
+function loop(){
+  const t = ctx.currentTime - t0;
+  let now = -1;
+  for (let i = 0; i < marks.length; i++){
+    if (t >= marks[i].start - LEAD && t < marks[i].end + GAP) { now = i; break; }
+  }
+  if (now !== cur){
+    cur = now;
+    document.querySelectorAll("#pal button").forEach(b => b.classList.remove("on"));
+  }
+  const m = cur >= 0 ? marks[cur] : null;
+  document.getElementById("slot").textContent = m ? m.slot : "–";
+  document.getElementById("slotsub").textContent =
+    m ? (t < m.start ? "coming up" : "listening") : "slot";
+  const frac = m ? Math.max(0, Math.min(1, (t - m.start) / TONE)) : 0;
+  document.getElementById("barfill").style.width = (frac * 100) + "%";
+  if (t > marks[marks.length - 1].end + GAP) return finish();
+  raf = requestAnimationFrame(loop);
+}
+
+function finish(){
+  cancelAnimationFrame(raf);
+  document.getElementById("run").classList.add("hide");
+  document.getElementById("done").classList.remove("hide");
+
+  const byslot = {};
+  taps.forEach(t => {
+    const e = byslot[t.slot] = byslot[t.slot] || {labels:[], at:null};
+    if (!e.labels.includes(t.label)) e.labels.push(t.label);
+    if (e.at === null) e.at = t.at;
+  });
+  const meta = {};
+  PALETTE.forEach(p => meta[p.label] = p);
+
+  const lines = [];
+  lines.push("field clicker v3  " + new Date().toISOString().slice(0,16) + "Z");
+  lines.push("reference level: " + (levelSaid || "(not said)"));
+  lines.push("");
+  lines.push("slot  actual      what you said                       pull   at");
+  const catches = [], caught = [], falseAlarms = [], untapped = [];
+  const felt = [], notFelt = [], barely = [];
+  marks.forEach(m => {
+    const e = byslot[m.slot] || {labels:[], at:null};
+    const ls = e.labels;
+    const silent = !m.freq;
+    if (silent) catches.push(m.slot);
+    const presence = presenceOf(ls, meta);
+
+    if (presence === "untapped") untapped.push(m.slot);
+    if (silent && presence === "none")  caught.push(m.slot);
+    if (silent && (presence === "there" || presence === "barely")) falseAlarms.push(m.slot);
+    if (!silent && presence === "none")   notFelt.push(m.freq);
+    if (!silent && presence === "barely"){ barely.push(m.freq); felt.push(m.freq); }
+    if (!silent && presence === "there")   felt.push(m.freq);
+
+    const pull = pullOf(ls, meta);
+    lines.push(
+      String(m.slot).padStart(4) + "  " +
+      (silent ? "(silent)  " : (m.freq.toFixed(1) + " Hz").padEnd(10)) + "  " +
+      (ls.join(", ") || "(no tap)").padEnd(34) + " " +
+      (pull > 0 ? "+" + pull : String(pull)).padStart(4) + "   " +
+      (e.at === null ? "" : "+" + e.at.toFixed(1) + "s"));
+  });
+  const lowestFelt   = felt.length    ? Math.min(...felt)    : null;
+  const highestNot   = notFelt.length ? Math.max(...notFelt) : null;
+  const lowestBarely = barely.length  ? Math.min(...barely)  : null;
+  lines.push("");
+  lines.push("silent slots were: " + catches.join(", "));
+  lines.push("caught " + caught.length + "/" + catches.length +
+             ", false alarms " + falseAlarms.length +
+             (untapped.length ? ", untapped slots " + untapped.join(",") : ""));
+  if (lowestFelt !== null){
+    lines.push("lowest you felt: " + lowestFelt.toFixed(1) + " Hz" +
+      (lowestBarely !== null ? "   (barely at " + lowestBarely.toFixed(1) + " Hz)" : "") +
+      (highestNot !== null && highestNot < lowestFelt
+        ? "   (nothing at " + highestNot.toFixed(1) + " Hz)" : ""));
+  }
+  if (untapped.length){
+    lines.push("NOTE: untapped is not the same as empty — those slots say nothing either way.");
+  }
+
+  /* Repeat trials. This is the only part of the run that bears on the QUALITY
+     channel; the catch trials bear only on presence. Reported whether it
+     agrees or not -- a disagreement is the finding, not a failure. */
+  const seen = {};
+  marks.forEach(m => {
+    if (!m.freq) return;
+    const e = byslot[m.slot] || {labels:[]};
+    if (!seen[m.freq]) seen[m.freq] = [];
+    seen[m.freq].push({slot:m.slot, labels:e.labels});
+  });
+  const repeated = Object.keys(seen).filter(f => seen[f].length > 1);
+  if (repeated.length){
+    lines.push("");
+    lines.push("repeat trials — same tone twice, >=" + MIN_SEP + " slots apart:");
+    let presAgree = 0, pullAgree = 0;
+    repeated.forEach(f => {
+      const a = seen[f][0], b = seen[f][1];
+      const pa = presenceOf(a.labels, meta), pb = presenceOf(b.labels, meta);
+      const ua = pullOf(a.labels, meta),     ub = pullOf(b.labels, meta);
+      if (pa === pb) presAgree++;
+      if (Math.sign(ua) === Math.sign(ub)) pullAgree++;
+      lines.push("  " + Number(f).toFixed(1) + " Hz  slot " + a.slot + ": " +
+                 (a.labels.join(", ") || "(no tap)"));
+      lines.push("  " + "".padEnd(Number(f).toFixed(1).length) +
+                 "      slot " + b.slot + ": " + (b.labels.join(", ") || "(no tap)") +
+                 "   [presence " + (pa === pb ? "same" : pa + " vs " + pb) +
+                 ", pull " + (Math.sign(ua) === Math.sign(ub) ? "same" : ua + " vs " + ub) + "]");
+    });
+    lines.push("presence agreed " + presAgree + "/" + repeated.length +
+               ", pull sign agreed " + pullAgree + "/" + repeated.length);
+    lines.push("NOTE: n is tiny per run. This only means something pooled across runs,");
+    lines.push("and only while the palette is unchanged — changing the word list");
+    lines.push("changes the answer (95.2 Hz went Neutral -> Restorative that way).");
+  }
+  document.getElementById("out").value = lines.join("\n");
+  document.getElementById("verdict").textContent =
+    "The silent slots were drawn at random in your phone when you pressed start. " +
+    "Nobody knew them, including me, until this screen.";
+}
+
+/* Any failure in here used to look identical to a dead button. It now prints
+   itself on the screen, so a fault is something she can read back to me
+   rather than something she has to describe. */
+function showErr(e){
+  const box = document.getElementById("err");
+  box.style.display = "block";
+  box.textContent =
+    "It failed to start, and this is why — send me this line.\n\n" +
+    (e && e.name ? e.name + ": " : "") + (e && e.message ? e.message : String(e)) +
+    "\n\n" + navigator.userAgent;
+}
+
+function mkLevels(){
+  const host = document.getElementById("level");
+  host.innerHTML = "";
+  LEVELS.forEach(name => {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.onclick = () => {
+      levelSaid = name;
+      [...host.children].forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      document.getElementById("levwarn").textContent = "";
+    };
+    host.appendChild(b);
+  });
+}
+
+function startReference(){
+  calOsc = ctx.createOscillator(); calGain = ctx.createGain();
+  calOsc.frequency.value = LADDER[0];
+  calGain.gain.value = 0;
+  calOsc.connect(calGain).connect(ctx.destination);
+  calOsc.start();
+  calGain.gain.linearRampToValueAtTime(PEAK, ctx.currentTime + 0.4);
+}
+
+function stopReference(){
+  if (!calOsc) return;
+  const t = ctx.currentTime;
+  try {
+    calGain.gain.cancelScheduledValues(t);
+    calGain.gain.setValueAtTime(calGain.gain.value, t);
+    calGain.gain.linearRampToValueAtTime(0, t + 0.25);
+  } catch(_){}
+  calOsc.stop(t + 0.4);
+  calOsc = null; calGain = null;
+}
+
+document.getElementById("start").onclick = () => {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) throw new Error("This browser has no Web Audio (needs Safari or Chrome, not a file preview).");
+    ctx = new AC();
+    if (ctx.resume) ctx.resume();
+    mkLevels();
+    startReference();
+    document.getElementById("intro").classList.add("hide");
+    document.getElementById("cal").classList.remove("hide");
+  } catch (e) { showErr(e); }
+};
+
+document.getElementById("go").onclick = () => {
+  try {
+    if (!levelSaid){
+      document.getElementById("levwarn").textContent =
+        "Say how the reference feels first — it is the only thing that makes " +
+        "tonight comparable with the last run. Tap again to go anyway.";
+      document.getElementById("go").onclick = runNow;
+      return;
+    }
+    runNow();
+  } catch (e) { showErr(e); }
+};
+
+function runNow(){
+  try {
+    stopReference();
+    plan = makePlan();
+    if (plan === null) throw new Error(
+      "could not lay out the run with repeats " + MIN_SEP +
+      " slots apart after 500 tries. Refusing to run rather than " +
+      "presenting a repeat so close it tests memory instead of perception.");
+    taps = []; cur = -1;
+    mkPalette();
+    schedule();
+    document.getElementById("cal").classList.add("hide");
+    document.getElementById("run").classList.remove("hide");
+    draw(); loop();
+  } catch (e) {
+    document.getElementById("cal").classList.add("hide");
+    document.getElementById("intro").classList.remove("hide");
+    showErr(e);
+  }
+}
+
+window.onerror = function(msg, src, line, col, e){ try { showErr(e || msg); } catch(_){} };
+
+document.getElementById("copy").onclick = async () => {
+  const ta = document.getElementById("out");
+  try { await navigator.clipboard.writeText(ta.value); }
+  catch(e){ ta.select(); document.execCommand("copy"); }
+  document.getElementById("copy").textContent = "Copied";
+};
+
+document.getElementById("again").onclick = () => location.reload();
+</script>
+</body>
+</html>
