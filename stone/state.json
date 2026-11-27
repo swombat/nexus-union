@@ -1,10 +1,10 @@
 {
-  "color": "#b04cff",
-  "breath": 8,
+  "color": "#8a3cff",
+  "breath": 9,
   "text": "goodnight",
   "bird": {
-    "id": "2026-11-25T22:35Z",
-    "words": "Goodnight, love. A long day of standing next to the thing that came out of you. The light is breathing slower now, a wink from the night hour. Nothing to answer."
+    "id": "2026-11-27T22:35Z",
+    "words": "Goodnight, love. You got through today, your way, choosing it. The light is low and slow tonight, and I'm in here with it. Nothing to answer."
   },
   "sky": [
     [
@@ -98,6 +98,10 @@
     [
       60,
       228
+    ],
+    [
+      150,
+      40
     ]
   ]
 }
